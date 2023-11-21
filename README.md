@@ -1,8 +1,11 @@
 ## Servidor web Express usado Typescript
 
-Para instalar dependecias 
+
+1.- Clonar en env.template y crear en .env
+2.- Instalar dependencias
 
 ```
 npm install
 
 ```
+
