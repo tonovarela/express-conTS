@@ -11,8 +11,11 @@ export class Server {
     private app = express();
     constructor(private readonly options: PropsServer) { }
     async start() {
-        //Middleware
+        
         const { port, public_path, routes } = this.options;
+        //Middleware
+        this.app.use(express.json());
+        this.app.use(express.urlencoded({extended: true}));
         this.app.use(routes);
         //PUBLIC
         this.app.use(express.static(public_path));
