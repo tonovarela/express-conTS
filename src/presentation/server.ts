@@ -2,6 +2,9 @@
 import express, { Router } from 'express';
 import path from 'path';
 
+import compression from 'compression';
+import { prisma } from '../data/postgres/index';
+
 interface PropsServer {
     port: number;
     public_path: string,
@@ -17,6 +20,7 @@ export class Server {
         this.app.use(express.json());
         this.app.use(express.urlencoded({extended: true}));
         this.app.use(routes);
+        this.app.use(compression())
         //PUBLIC
         this.app.use(express.static(public_path));
         //SPA
@@ -25,7 +29,8 @@ export class Server {
             res.sendFile(indexPath);
             return;
         });
-        this.app.listen(port, () => {
+        this.app.listen(port, async() => {
+            await prisma.$connect();            
             console.log(`Server running on port ${port}`);
         });
     }

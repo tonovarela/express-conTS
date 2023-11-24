@@ -1,86 +1,72 @@
 import { Request, Response } from 'express';
-import { prisma } from '../../../data/postgres';
 import { CreateTodoDTO, UpdateTodoDTO } from '../../../domain/dtos/todos';
-import { TodoRepository } from '../../../domain';
+import { CreateTodo, DeleteTodo, GetTodo, GetTodos, TodoRepository, UpdateTodo } from '../../../domain';
 
 
 
 export class TodosController {
     constructor(private readonly todoRepository: TodoRepository) { }
 
-    public getTodos = async (req: Request, res: Response) => {
-        const todos = await this.todoRepository.getAll();
-        res.json(todos);
+    public getTodos = (req: Request, res: Response) => {
+        new GetTodos(this.todoRepository).execute().then((todos) => {            
+            res.status(200).json(todos);
+        });
     }
 
-    public getTodoById = async (req: Request, res: Response) => {
+    public getTodoById = (req: Request, res: Response) => {
         const id = +req.params.id;
         if (isNaN(id)) {
-            return res.status(400).json({ error: "El id debe ser un numero" });
+            return res.status(400).json({ error: "El id debe ser un número" });
         }
-        const todo = await this.todoRepository.findById(id);
-        if (!todo) {
-            return res.status(404).json({ error: "TODO no existe" });
-        }
-        return res.json(todo);
+        new GetTodo(this.todoRepository).execute(id).then((todo) => {
+            if (!todo) throw new Error("Todo no encontrado");
+            return res.json(todo);
+        }).catch((error) => {
+            return res.status(404).json({ error: error.message });
+        });
     }
 
-    public createTodo = async (req: Request, res: Response) => {
+    public createTodo = (req: Request, res: Response) => {
         const [error, createTodoDTO] = CreateTodoDTO.create(req.body);
         if (error) { return res.status(400).json({ error }); }
-        try {
-            const newTodo = await this.todoRepository.create(createTodoDTO!);
-            return res.status(201).json(newTodo);
-        } catch (error) {
+        new CreateTodo(this.todoRepository).execute(createTodoDTO!).then(todo => {
+            return res.status(201).json(todo);
+        }).catch((error) => {
             return res.status(400).json(error);
-        }
+        })
 
     }
 
-    public updateTodo = async (req: Request, res: Response) => {
+
+
+    public updateTodo = (req: Request, res: Response) => {
         const id = Number(req.params.id);
         const [error, updateTodoDTO] = UpdateTodoDTO.create({ ...req.body });
         if (error) { return res.status(400).json({ error }); }
-
-        const todo = await this.todoRepository.findById(id);
-        if (!todo) {
-            return res.status(404).json({
-                error: "Todo no encontrado"
-            })
-        }
-        try {
-            const updatedTodo = await this.todoRepository.update(id, updateTodoDTO!);
-            res.json(updatedTodo)
-        } catch (error) {
+        new UpdateTodo(this.todoRepository).execute(id, updateTodoDTO!).then(todo => {
+            return res.status(200).json(todo);
+        }).catch((error) => {
             return res.status(400).json(error);
-        }
+        });
 
     }
 
-    public deleteTodo = async (req: Request, res: Response) => {
+
+
+
+    public deleteTodo =  (req: Request, res: Response) => {
         const id = +req.params.id;
         if (isNaN(id)) {
             return res.status(400).json({
                 error: "El id debe ser un numero"
             });
         }
-        const todo = await this.todoRepository.findById(id)
-        if (!todo) {
-            return res.status(404).json({
-                error: "Todo no encontrado"
-            })
-        }
-        try {
-            await this.todoRepository.deleteById(id);
-            return res.status(200).json({
-                message: "Todo eliminado",
-                todo
-            })
-        } catch (error) {
-            return res.status(400).json(error);
-        }
-
-
+        new DeleteTodo(this.todoRepository).execute(id)
+        .then((todo) => res.status(200).json(todo)).catch((error) => {
+            return res.status(404).json({ error: error.message });
+        });
     }
 
+
 }
+

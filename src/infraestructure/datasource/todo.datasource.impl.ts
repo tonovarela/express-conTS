@@ -11,17 +11,22 @@ export class TodoDataSourceImpl implements TodoDataSource {
         return TodoEntity.fromObject(newTodo)
     }
     async update(id: number, todo: UpdateTodoDTO): Promise<TodoEntity> {                
+        await prisma.todo.findFirst({ where: { id } });
         const updatedTodo = await prisma.todo.update({ where: { id }, data: todo!.values });
         return TodoEntity.fromObject(updatedTodo)
     }
-    async findById(id: number): Promise<TodoEntity | undefined> {
+    async findById(id: number): Promise<TodoEntity> {
         const todo = await prisma.todo.findFirst({ where: { id } });
-        if (!todo) return undefined;
+        if (!todo) {
+            throw new Error("Todo not found")
+        }
         return TodoEntity.fromObject(todo);
 
     }
-    async deleteById(id: number): Promise<void> {        
-        await prisma.todo.delete({ where: { id } })
+    async deleteById(id: number): Promise<TodoEntity> {  
+        const todo =await this.findById(id)      
+        await prisma.todo.delete({ where: { id } });
+        return todo!;
     }
 
 }

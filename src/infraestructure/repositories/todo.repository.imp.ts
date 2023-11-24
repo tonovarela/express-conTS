@@ -12,10 +12,10 @@ export class TodoRepositoryImpl implements TodoRepository {
     update(id: number, todo: UpdateTodoDTO): Promise<TodoEntity> {
         return this.todoDataSource.update(id, todo);
     }
-    findById(id: number): Promise<TodoEntity | undefined> {
+    findById(id: number): Promise<TodoEntity> {
         return this.todoDataSource.findById(id);
     }
-    deleteById(id: number): Promise<void> {
+    deleteById(id: number): Promise<TodoEntity> {
         return this.todoDataSource.deleteById(id);
     }
 }
